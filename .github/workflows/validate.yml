@@ -1,0 +1,64 @@
+name: 规则库校验
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.9 是目标部署环境（WorkBuddy 宿主机自带版本），必须保证兼容；
+        # 3.11 与 3.13 用于提前发现 re 模块行为变化与语法弃用。
+        python-version: ["3.9", "3.11", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # 全流程不执行任何 pip install。规则引擎声明零第三方依赖，
+      # 这一步跑通本身就是该声明的持续验证。
+      - name: 规则库结构校验与内嵌测试
+        run: python scripts/validate_rules.py
+
+      - name: 样本基线回归
+        run: python scripts/check_baselines.py --verbose
+
+      - name: 确认运行时未引入第三方依赖
+        run: |
+          python - <<'PY'
+          import ast, pathlib, sys
+
+          # 标准库之外的任何顶层导入都会破坏「目标环境无需联网装包」的前提。
+          # tools/ 不在此列：文档生成脚本依赖 python-docx，但它不参与扫描。
+          allowed = set(sys.stdlib_module_names) if hasattr(sys, "stdlib_module_names") else None
+          offenders = []
+          for path in pathlib.Path("scripts").glob("*.py"):
+              tree = ast.parse(path.read_text(encoding="utf-8"))
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.Import):
+                      names = [a.name.split(".")[0] for a in node.names]
+                  elif isinstance(node, ast.ImportFrom) and node.level == 0:
+                      names = [(node.module or "").split(".")[0]]
+                  else:
+                      continue
+                  for name in names:
+                      if not name or name in ("rule_engine", "scan_rules"):
+                          continue
+                      if allowed is not None and name not in allowed:
+                          offenders.append("%s -> %s" % (path, name))
+          if offenders:
+              print("检测到第三方依赖：")
+              for item in offenders:
+                  print("  " + item)
+              raise SystemExit(1)
+          print("scripts/ 仅使用标准库。")
+          PY
