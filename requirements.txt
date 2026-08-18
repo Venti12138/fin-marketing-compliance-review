@@ -1,8 +1,0 @@
-# 扫描引擎（scripts/）零第三方依赖，仅需 Python 3.9+，不必安装本文件。
-# 目标部署环境为金融机构内网，无法联网装包，这是硬约束而非偏好。
-# CI 中有一步静态检查会验证 scripts/ 只使用标准库。
-#
-# 以下仅供生成 docx 说明文档使用（tools/gen_doc.py），与审查流程无关：
-#   pip install -r requirements.txt
-
-python-docx>=1.1.0

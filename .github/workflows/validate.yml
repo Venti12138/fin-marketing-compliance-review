@@ -38,7 +38,7 @@ jobs:
           import ast, pathlib, sys
 
           # 标准库之外的任何顶层导入都会破坏「目标环境无需联网装包」的前提。
-          # tools/ 不在此列：文档生成脚本依赖 python-docx，但它不参与扫描。
+          # 该约束覆盖整个仓库，不存在需要 pip install 才能使用的部分。
           allowed = set(sys.stdlib_module_names) if hasattr(sys, "stdlib_module_names") else None
           offenders = []
           for path in pathlib.Path("scripts").glob("*.py"):
