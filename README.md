@@ -398,15 +398,56 @@ REQ-006 与 REQ-010 定为 advisory 是刻意的：公募基金材料标注风�
 
 ## 八、使用方式
 
+### 前置条件
+
+- Python 3.9 或更高版本（`python3 -V` 确认），无需安装任何第三方包
+- 若要在 WorkBuddy 中使用，需已安装 WorkBuddy；仅用命令行则不需要
+
 ### 安装
 
 ```bash
-ln -sfn /path/to/fin-marketing-compliance-review ~/.workbuddy/skills/fin-marketing-compliance-review
+git clone https://github.com/Venti12138/fin-marketing-compliance-review.git
+cd fin-marketing-compliance-review
+
+mkdir -p ~/.workbuddy/skills
+ln -sfn "$(pwd)" ~/.workbuddy/skills/fin-marketing-compliance-review
 ```
 
-用符号链接而非复制，规则库改动即时生效。
+用符号链接而非复制，规则库改动即时生效，不必重新安装。
 
-### 命令行调用
+**装好后需完全退出并重启 WorkBuddy**——它只在启动时扫描 skills 目录。
+
+### 验证安装
+
+```bash
+python3 scripts/validate_rules.py      # 规则库校验与 129 个内嵌测试
+python3 scripts/check_baselines.py     # 8 份样本基线回归
+```
+
+两条都输出「通过」即安装正确。这两个脚本也是每次改动规则后的必跑项。
+
+### 在 WorkBuddy 中使用
+
+重启后在对话中直接提出审查请求，附上材料路径：
+
+```
+帮我审一下这份材料是否合规：/path/to/推介材料.md
+这是公募基金的产品推介材料，面向普通投资者，发在公众号上，我们是基金管理人。
+```
+
+一句话说清四个维度（产品类型、受众范围、材料载体、机构类型）能让结果最准确。**不提供也可以**，Agent 会主动询问；但四个维度中任一缺失时，带该维度限定的规则会被跳过（宁可漏报也不在信息不足时误报），报告中会说明哪些检查项因此未被覆盖。
+
+支持的材料：Markdown、纯文本，以及由 WorkBuddy 解析的 PDF、Word、PPT。想先试跑，可以直接用仓库里的样本：
+
+```
+审一下 examples/sample-public-fund-violating.md，公募基金，面向公众，线上渠道，基金管理人
+```
+
+这份样本预期报出 30 项发现（17 项违规、5 项待补证、6 项待研判、2 项建议）。
+
+### 命令行直接使用
+
+不装 WorkBuddy 也能跑，只是没有语义研判层和报告渲染：
 
 ```bash
 python3 scripts/scan_rules.py \
@@ -414,19 +455,19 @@ python3 scripts/scan_rules.py \
   --product public_fund \
   --audience public \
   --media online \
-  --institution fund_manager \
-  --json
+  --institution fund_manager
 ```
 
-四个上下文参数均可省略，省略时对应规则跳过。
+加 `--json` 输出结构化结果。四个上下文参数均可省略，省略时对应规则跳过并计入 `stats.skipped_rules`。
 
-### 校验规则库
+| 参数 | 可选值 |
+|---|---|
+| `--product` | `public_fund` / `private_fund` / `am_plan` / `wealth_mgmt` |
+| `--audience` | `public`（面向不特定公众）/ `specific`（面向特定合格投资者） |
+| `--media` | `print` / `online` / `video` / `audio` |
+| `--institution` | `fund_manager` / `securities_firm` / `bank` / `wealth_subsidiary` |
 
-```bash
-python3 scripts/validate_rules.py
-```
-
-任何规则改动后必须执行。
+退出码：`0` 正常，`2` 文件或规则库读取失败，`3` 材料内容为空或过短（通常意味着文档解析失败）。
 
 ### 新增规则
 
