@@ -1,4 +1,4 @@
-# 金融营销材料合规审查 Skill
+# 金融合规检测 Skill
 
 [![规则库校验](https://github.com/Venti12138/fin-marketing-compliance-review/actions/workflows/validate.yml/badge.svg)](https://github.com/Venti12138/fin-marketing-compliance-review/actions/workflows/validate.yml)
 
