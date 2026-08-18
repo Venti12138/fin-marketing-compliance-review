@@ -1,0 +1,11 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.idea/
+.vscode/
+*.swp
+
+# WorkBuddy 运行时产出的审查报告，含被审材料内容，不入库
+compliance-review-report*.md
