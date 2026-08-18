@@ -1,5 +1,7 @@
 # 金融营销材料合规审查 Skill
 
+[![规则库校验](https://github.com/Venti12138/fin-marketing-compliance-review/actions/workflows/validate.yml/badge.svg)](https://github.com/Venti12138/fin-marketing-compliance-review/actions/workflows/validate.yml)
+
 一个跑在 WorkBuddy 上的 Agent Skill，对基金、资管、理财产品的营销宣传材料做发布前合规审查，输出可追溯到法条原文的问题清单。
 
 规则库 43 条规则、法条索引 39 个条目，全部处理在本地完成，零第三方依赖。
